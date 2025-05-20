@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía de Modelos de IA Generativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #2d3748;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .icon-container {
+            background-color: #ef4444; /* red-500 */
+            border-radius: 9999px; /* rounded-full */
+            width: 3rem; /* w-12 */
+            height: 3rem; /* h-12 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem; /* text-2xl */
+        }
+        /* Style for links within cards */
+        .card h2 a {
+            color: #2d3748; /* Inherit text color */
+            text-decoration: none; /* No underline by default */
+            transition: color 0.2s ease-in-out;
+        }
+        .card h2 a:hover {
+            color: #ef4444; /* Red on hover */
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4">
+                <i class="fas fa-magic text-red-600 mr-3"></i>
+                Modelos de IA Generativa Clave
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Descubre los modelos de Inteligencia Artificial Generativa que están creando contenido nuevo y diverso en múltiples modalidades.
+            </p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://www.researchgate.net/publication/379304885_Generative_adversarial_networks_GANs_Introduction_Taxonomy_Variants_Limitations_and_Applications" target="_blank" rel="noopener noreferrer">
+                        Redes Generativas Antagónicas (GANs)
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Compuestas por un generador y un discriminador que compiten para crear datos sintéticos realistas.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Creación de imágenes realistas</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Generación de audio</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Síntesis de datos</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-compress-arrows-alt"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://www.ibm.com/think/topics/variational-autoencoder" target="_blank" rel="noopener noreferrer">
+                        Autoencoders Variacionales (VAEs)
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Codifican datos probabilísticamente en un espacio latente para generar nuevas variaciones.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Reducción de ruido</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Compresión de datos</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Detección de anomalías</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-paint-brush"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://stability.ai/news/stable-diffusion-public-release" target="_blank" rel="noopener noreferrer">
+                        Stable Diffusion (Stability AI)
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Generación de imágenes a partir de texto, de código abierto y altamente personalizable.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Creación de arte y diseño</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Marketing y publicidad visual</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Inpainting y Outpainting</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-image"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://openai.com/index/dall-e-3/" target="_blank" rel="noopener noreferrer">
+                        DALL-E 3 (OpenAI)
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Modelo de texto a imagen con comprensión contextual mejorada y alta precisión.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Diseño gráfico</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Arte conceptual</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Creación de logotipos</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://openai.com/sora/" target="_blank" rel="noopener noreferrer">
+                        Sora (OpenAI)
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Genera clips de video fotorrealistas y temporalmente coherentes a partir de texto.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Creación de contenido de video</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Prototipos de películas</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    IA Multimodal
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Modelos como <a href="https://openai.com/index/gpt-4/" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">GPT-4o</a> y <a href="https://ai.google.dev/gemini-api/docs/models?hl=es-419" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Gemini 2.5 Pro</a> que integran y generan contenido de múltiples tipos de datos (texto, imagen, audio, video).
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Asistentes virtuales avanzados</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Experiencias interactivas</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Generación de código</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://arxiv.org/html/2501.13104v1" target="_blank" rel="noopener noreferrer">
+                        Neural Radiance Fields (NeRFs)
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Generan escenas 3D realistas a partir de imágenes 2D, modelando la radiancia en el espacio.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Modelado 3D</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Realidad virtual/aumentada</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-stream"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://www.analyticsvidhya.com/blog/2022/03/a-brief-overview-of-recurrent-neural-networks-rnn/" target="_blank" rel="noopener noreferrer">
+                        Redes Neuronales Recurrentes (RNNs)
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Adecuadas para la generación de datos secuenciales, manteniendo la memoria de entradas anteriores.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Composición musical</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Generación de texto secuencial</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 flex flex-col items-center text-center">
+                <div class="icon-container mb-4">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    <a href="https://arxiv.org/abs/2502.13394" target="_blank" rel="noopener noreferrer">
+                        Flow Models
+                    </a>
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    Utilizan transformaciones invertibles para mapear datos en un espacio latente, permitiendo una generación precisa.
+                </p>
+                <ul class="text-left text-gray-700 space-y-1">
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Generación de datos</li>
+                    <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i>Estimación de densidad</li>
+                </ul>
+            </div>
+
+        </main>
+
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>Infografía generada a partir de la sección 4.2 "Modelos Clave y sus Aplicaciones" del documento "Panorama Exhaustivo de los Modelos de IA Actuales: Usos, Rendimiento y Consideraciones Clave".</p>
+        </footer>
+    </div>
+</body>
+</html>
