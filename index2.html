@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<!-- Visualization & Content Choices:
+    - Report Info: Table 1 (LLM Performance) -> Goal: Compare LLMs -> Viz: Interactive Bar Charts (MMLU, Speed) & Sortable HTML Table -> Interaction: Hover tooltips, sort by column, filter by text -> Justification: Bar charts for quick visual comparison of key metrics, table for detailed data access -> Library: Chart.js, Vanilla JS.
+    - Report Info: Table 2 (CV Model Performance) -> Goal: Compare CV Models -> Viz: Interactive Bar Charts (Accuracy, mAP) & Sortable HTML Table -> Interaction: Hover tooltips, sort by column, filter by text -> Justification: Similar to LLMs, for visual and detailed comparison -> Library: Chart.js, Vanilla JS.
+    - Report Info: Lists of AI Models (e.g., GPT series, YOLO family) -> Goal: Inform about individual models -> Viz: Expandable Cards -> Interaction: Click to expand/collapse details -> Justification: Concise overview with option for in-depth info without cluttering the page -> Library: Vanilla JS, Tailwind CSS.
+    - Report Info: Textual explanations (e.g., Transformer architecture, Ethical challenges) -> Goal: Explain concepts -> Viz: Styled text blocks, bullet points -> Interaction: Read more toggles for long sections -> Justification: Readability and progressive disclosure of information -> Library: Vanilla JS, Tailwind CSS.
+    - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador Interactivo de Modelos de IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAF7F5;
+            color: #3D3B3A;
+        }
+        .nav-link {
+            @apply px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-amber-100 hover:text-amber-700 transition-colors;
+        }
+        .nav-link.active {
+            @apply bg-amber-600 text-white hover:bg-amber-700 hover:text-white;
+        }
+        .section-title {
+            @apply text-3xl font-bold text-amber-700 mb-6 text-center;
+        }
+        .card {
+            @apply bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300;
+        }
+        .card-title {
+            @apply text-xl font-semibold text-amber-600 mb-2;
+        }
+        .card-content p {
+            @apply text-gray-700 mb-1 text-sm;
+        }
+        .card-content ul {
+            @apply list-disc list-inside text-gray-700 text-sm space-y-1;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px; /* Adjusted max-width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .chart-container {
+                height: 400px;
+                max-height: 450px;
+            }
+        }
+        table {
+            @apply w-full text-sm text-left text-gray-500;
+        }
+        thead {
+            @apply text-xs text-gray-700 uppercase bg-amber-50;
+        }
+        th, td {
+            @apply px-4 py-3;
+        }
+        tbody tr {
+            @apply border-b bg-white hover:bg-amber-50;
+        }
+        .expand-button {
+            @apply text-amber-600 hover:text-amber-800 text-xs font-semibold mt-2 inline-block;
+        }
+        .details {
+            @apply hidden mt-2 border-t border-amber-200 pt-2;
+        }
+        .filter-input {
+            @apply mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm mb-4;
+        }
+        .tab-button {
+            @apply px-4 py-2 font-medium text-sm rounded-lg transition-colors;
+        }
+        .tab-button.active {
+            @apply bg-amber-600 text-white;
+        }
+        .tab-button:not(.active) {
+            @apply text-amber-700 hover:bg-amber-100;
+        }
+        .tab-content {
+            @apply hidden p-4 border border-t-0 rounded-b-lg border-gray-200;
+        }
+        .tab-content.active {
+            @apply block;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="text-2xl font-bold text-amber-700">
+                        <i class="fas fa-brain mr-2"></i>Modelos de IA
+                    </a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#introduccion" class="nav-link active">Introducción</a>
+                        <a href="#llms" class="nav-link">LLMs</a>
+                        <a href="#vision" class="nav-link">Visión</a>
+                        <a href="#generativa" class="nav-link">IA Generativa</a>
+                        <a href="#otros-modelos" class="nav-link">Otros Modelos</a>
+                        <a href="#evaluacion" class="nav-link">Evaluación</a>
+                        <a href="#desafios" class="nav-link">Desafíos</a>
+                        <a href="#futuro" class="nav-link">Futuro</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-700 hover:text-amber-700 focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden bg-white shadow-lg">
+            <a href="#introduccion" class="block nav-link text-base">Introducción</a>
+            <a href="#llms" class="block nav-link text-base">LLMs</a>
+            <a href="#vision" class="block nav-link text-base">Visión</a>
+            <a href="#generativa" class="block nav-link text-base">IA Generativa</a>
+            <a href="#otros-modelos" class="block nav-link text-base">Otros Modelos</a>
+            <a href="#evaluacion" class="block nav-link text-base">Evaluación</a>
+            <a href="#desafios" class="block nav-link text-base">Desafíos</a>
+            <a href="#futuro" class="block nav-link text-base">Futuro</a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
+        <section id="introduccion" class="py-12">
+            <h2 class="section-title">1. Introducción: El Ecosistema de Modelos de IA</h2>
+            <p class="text-lg text-gray-700 mb-6 text-center max-w-3xl mx-auto">
+                La inteligencia artificial (IA) es un campo en constante evolución que busca emular el pensamiento humano en las máquinas. Este explorador interactivo ofrece un panorama de los modelos de IA actuales, sus usos, rendimiento y las consideraciones clave que los rodean.
+            </p>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-history mr-2"></i>Evolución Histórica</h3>
+                    <p class="card-content">Desde los fundamentos teóricos en los años 40-50, pasando por la IA simbólica, el auge del Machine Learning en los 90-2000, la revolución del Deep Learning en 2010, hasta la IA moderna con la irrupción de la IA Generativa. Cada fase ha sido marcada por avances que reconfiguran la sociedad.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-cogs mr-2"></i>Clasificación Fundamental</h3>
+                    <ul class="card-content space-y-2">
+                        <li><strong>Por Tipo de Aprendizaje:</strong> Supervisado, No Supervisado, Por Refuerzo, Profundo.</li>
+                        <li><strong>Por Capacidad:</strong> IA Débil (Estrecha), IA Fuerte (General), IA Superinteligente.</li>
+                        <li><strong>Por Funcionalidad:</strong> Reactiva, Memoria Limitada, Teoría de la Mente, Autoconsciente.</li>
+                        <li><strong>Por Propósito:</strong> Generativa, Predictiva, Asistencial.</li>
+                    </ul>
+                    <p class="card-content mt-2">La IA multimodal, que integra múltiples tipos de datos, es un ejemplo de la convergencia de estas clasificaciones, imitando la cognición humana.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="llms" class="py-12 bg-amber-50 rounded-xl">
+            <h2 class="section-title">2. Modelos de Lenguaje Grande (LLMs) y NLP</h2>
+            <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                Los LLMs han revolucionado la comprensión y generación del lenguaje natural. La arquitectura Transformer, con su mecanismo de autoatención, ha sido fundamental en este avance, permitiendo el procesamiento paralelo y la gestión de dependencias a largo alcance.
+            </p>
+
+            <div class="mb-8">
+                <h3 class="text-2xl font-semibold text-amber-700 mb-4 text-center">Modelos Clave y Aplicaciones</h3>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="llmModelsContainer">
+                    </div>
+            </div>
+
+            <div>
+                <h3 class="text-2xl font-semibold text-amber-700 mb-4 text-center">Comparativa de Rendimiento de LLMs</h3>
+                 <p class="text-gray-600 mb-6 text-center">Interactúa con los datos de la Tabla 1 del informe. Filtra la tabla y explora las gráficas para comparar modelos.</p>
+                <input type="text" id="llmTableFilter" class="filter-input" placeholder="Filtrar modelos por nombre, desarrollador...">
+                <div class="overflow-x-auto bg-white rounded-lg shadow mb-8">
+                    <table id="llmTable">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="sortable" data-sort="modelo">Modelo <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="desarrollador">Desarrollador <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="mmlu">MMLU/Índice Intel. <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="velocidad">Velocidad (tokens/s) <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="latencia">Latencia (TTFT) <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="contexto">Ventana Contexto <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="costo">Costo (USD/1M tk) <i class="fas fa-sort ml-1"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="llmTableBody">
+                            </tbody>
+                    </table>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card">
+                        <h4 class="card-title text-center">MMLU / Índice de Inteligencia</h4>
+                        <div class="chart-container">
+                            <canvas id="llmMMLUChart"></canvas>
+                        </div>
+                         <p class="text-xs text-gray-500 mt-2 text-center">Comparación de MMLU o Índice de Inteligencia. Valores más altos son mejores.</p>
+                    </div>
+                    <div class="card">
+                        <h4 class="card-title text-center">Velocidad de Salida (Tokens/s)</h4>
+                        <div class="chart-container">
+                            <canvas id="llmSpeedChart"></canvas>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Comparación de velocidad de salida. Valores más altos son mejores.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="vision" class="py-12">
+            <h2 class="section-title">3. Modelos de Visión por Computadora</h2>
+            <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                La visión por computadora permite a las máquinas interpretar datos visuales. Las Redes Neuronales Convolucionales (CNN) y los Vision Transformers (ViT) son arquitecturas clave, con innovaciones como conexiones residuales y escalado compuesto.
+            </p>
+            <div class="mb-8">
+                <h3 class="text-2xl font-semibold text-amber-700 mb-4 text-center">Modelos Clave y Aplicaciones</h3>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="cvModelsContainer">
+                    </div>
+            </div>
+             <div>
+                <h3 class="text-2xl font-semibold text-amber-700 mb-4 text-center">Comparativa de Rendimiento de Modelos de Visión</h3>
+                <p class="text-gray-600 mb-6 text-center">Interactúa con los datos de la Tabla 2 del informe. Filtra la tabla y explora las gráficas.</p>
+                <input type="text" id="cvTableFilter" class="filter-input" placeholder="Filtrar modelos por nombre, año...">
+                <div class="overflow-x-auto bg-white rounded-lg shadow mb-8">
+                    <table id="cvTable">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="sortable" data-sort="modelo">Modelo <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="año">Año <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col">Innovación Clave</th>
+                                <th scope="col" class="sortable" data-sort="precision">Precisión Top-1 (ImageNet) <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="map">mAP@0.50 <i class="fas fa-sort ml-1"></i></th>
+                                <th scope="col" class="sortable" data-sort="velocidad">Vel. Inferencia (ms) <i class="fas fa-sort ml-1"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cvTableBody">
+                            </tbody>
+                    </table>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card">
+                        <h4 class="card-title text-center">Precisión Top-1 (ImageNet)</h4>
+                        <div class="chart-container">
+                            <canvas id="cvAccuracyChart"></canvas>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Comparación de precisión en ImageNet. Valores más altos son mejores.</p>
+                    </div>
+                    <div class="card">
+                        <h4 class="card-title text-center">Velocidad de Inferencia (ms)</h4>
+                        <div class="chart-container">
+                            <canvas id="cvSpeedChart"></canvas>
+                        </div>
+                         <p class="text-xs text-gray-500 mt-2 text-center">Comparación de velocidad. Valores más bajos son mejores.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="generativa" class="py-12 bg-amber-50 rounded-xl">
+            <h2 class="section-title">4. Modelos de IA Generativa</h2>
+            <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                La IA Generativa (GenAI) crea contenido nuevo y diverso (texto, imágenes, video, audio, 3D). Modelos como GANs, VAEs y Modelos de Difusión son fundamentales.
+            </p>
+            <div class="mb-8">
+                <h3 class="text-2xl font-semibold text-amber-700 mb-4 text-center">Modelos Clave y Aplicaciones</h3>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="genAIModelsContainer">
+                    </div>
+            </div>
+            <div class="card mt-8">
+                <h3 class="card-title text-center">Consideraciones Éticas y Desafíos de la IA Generativa</h3>
+                <ul class="card-content columns-1 md:columns-2 space-y-1">
+                    <li>Pérdida de empleos en campos creativos.</li>
+                    <li>Sesgos raciales, de género y culturales.</li>
+                    <li>Deepfakes y desinformación.</li>
+                    <li>Creación de contenido ilegal.</li>
+                    <li>Explotación para ciberdelincuencia.</li>
+                    <li>Violaciones de propiedad intelectual.</li>
+                    <li>Proliferación de contenido de baja calidad ("AI slop").</li>
+                    <li>Alto consumo de recursos y huella de carbono.</li>
+                    <li>Imprecisiones y "alucinaciones".</li>
+                </ul>
+                <p class="card-content mt-3">La GenAI presenta una dualidad: poderosa para la creación, pero con riesgos sociales significativos que demandan desarrollo responsable.</p>
+            </div>
+        </section>
+
+        <section id="otros-modelos" class="py-12">
+            <h2 class="section-title">5. Otros Modelos Influyentes y Aplicaciones Especializadas</h2>
+            <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                Más allá de LLMs y CV, modelos como AlphaFold en la predicción de estructuras de proteínas y AlphaZero/MuZero en aprendizaje por refuerzo para juegos y optimización, muestran el vasto potencial de la IA en dominios especializados.
+            </p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="specializedModelsContainer">
+                </div>
+        </section>
+
+        <section id="evaluacion" class="py-12 bg-amber-50 rounded-xl">
+            <h2 class="section-title">6. Métricas de Evaluación y Benchmarking</h2>
+            <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                Evaluar modelos de IA, especialmente los generativos, requiere métricas que van más allá de la precisión tradicional, abarcando calidad, coherencia, fluidez, seguridad, eficiencia operativa y experiencia de usuario.
+            </p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-tasks mr-2"></i>Tipos de Métricas</h3>
+                    <ul class="card-content">
+                        <li><strong>Métricas de Calidad:</strong> Coherencia, fluidez, seguridad, fundamentación (groundedness), perplejidad, BLEU/ROUGE (texto), Inception Score/FID (imágenes).</li>
+                        <li><strong>Métricas Operacionales:</strong> Latencia, rendimiento (throughput), utilización de GPU/TPU, eficiencia computacional.</li>
+                        <li><strong>Métricas de Experiencia de Usuario:</strong> Tasa de adopción, frecuencia de uso, duración de sesión, retroalimentación (likes/dislikes).</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-balance-scale mr-2"></i>Importancia de Benchmarks y Evaluación Humana</h3>
+                    <p class="card-content">Los benchmarks estandarizados permiten comparaciones justas e impulsan la innovación. Sin embargo, la evaluación humana sigue siendo crucial para valorar cualidades subjetivas como la creatividad, la coherencia y la adecuación cultural, complementando las métricas cuantitativas.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="desafios" class="py-12">
+            <h2 class="section-title">7. Limitaciones y Desafíos Actuales</h2>
+            <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                A pesar de los avances, la IA enfrenta desafíos significativos como sesgos, alucinaciones, plagio, consumo de recursos y limitaciones fundamentales en la integración de sentidos y el razonamiento complejo.
+            </p>
+            <div class="space-y-6">
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-exclamation-triangle mr-2"></i>Sesgos (Bias)</h3>
+                    <p class="card-content">Originados en la recopilación de datos, etiquetado, entrenamiento o implementación. Tipos: de contenido, género, racial, cultural, selección, confirmación, etc. Mitigación: datos diversos, herramientas de detección, monitoreo y supervisión humana.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-ghost mr-2"></i>Alucinaciones e Imprecisiones</h3>
+                    <p class="card-content">Generación de información incorrecta o sin sentido. Contribuyen a la desinformación y errores en la toma de decisiones. La confianza excesiva en respuestas convincentes es un riesgo.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-copyright mr-2"></i>Plagio y Propiedad Intelectual</h3>
+                    <p class="card-content">Riesgo de fabricar investigación o no atribuir correctamente, llevando a infracciones de derechos de autor.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-leaf mr-2"></i>Consumo de Recursos y Huella de Carbono</h3>
+                    <p class="card-content">El entrenamiento de modelos grandes requiere inmensa capacidad computacional, con alto consumo de energía y agua.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="futuro" class="py-12 bg-amber-50 rounded-xl">
+            <h2 class="section-title">8. Tendencias Futuras y Direcciones de Investigación</h2>
+            <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                La investigación en IA se enfoca en la IA Confiable y Explicable (XAI), la IA Epistémica (reconocimiento de la ignorancia del modelo), la IA Cuántica y el desarrollo de modelos más generales y adaptables.
+            </p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-user-shield mr-2"></i>IA Confiable y Explicable (XAI)</h3>
+                    <p class="card-content">Busca crear sistemas cuyas acciones sean comprensibles para los humanos, mejorando la transparencia, equidad y rendición de cuentas.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-question-circle mr-2"></i>IA Epistémica</h3>
+                    <p class="card-content">Enfatiza la necesidad de que los modelos reconozcan y gestionen su propia incertidumbre para mejorar la robustez en entornos del mundo real.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-atom mr-2"></i>IA Cuántica</h3>
+                    <p class="card-content">Emplea qubits para cálculos complejos a velocidades exponenciales, con potencial para revolucionar las capacidades de la IA en el manejo de grandes datos.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-8">
+        <p>&copy; <span id="currentYear"></span> Explorador Interactivo de Modelos de IA. Basado en el informe "Panorama Exhaustivo de los Modelos de IA Actuales".</p>
+    </footer>
+
+    <script>
+        // Data for LLM Models (from report text and Table 1)
+        const llmModelsData = [
+            { name: "Serie GPT (OpenAI)", details: "Incluye GPT-3, GPT-4, GPT-4o (multimodal), o1 (razonamiento), o3-mini (rentable). Usos: Chatbots (ChatGPT), creación de contenido, generación de código, soporte al cliente.", mmlu: 0.748, intelligenceIndex: 41, outputSpeed: 138.6, ttfT: 0.46, contextWindow: "130k", cost: 4.38, developer: "OpenAI" },
+            { name: "BERT (Google)", details: "Procesamiento bidireccional para comprensión contextual. Usos: Mejora de motores de búsqueda, comprensión en chatbots, traducción.", developer: "Google" },
+            { name: "LLaMA (Meta)", details: "Capacidades de vanguardia con menor costo computacional. Escalable y versátil. Usos: NLP, IA conversacional, investigación. LLaMA 3 70b: razonamiento 44%.", mmlu: null, intelligenceIndex: null, outputSpeed: 130582, ttfT: null, contextWindow: "N/A", cost: 0.315, developer: "Meta" }, // Costo promedio entrada/salida
+            { name: "Familia Claude (Anthropic)", details: "Enfoque ético ('IA constitucional'). Claude 3.7 Sonnet (equilibrio), Claude 3 Opus (más inteligente, visión), Claude 3 Haiku (rápido). Usos: Soporte al cliente, moderación.", developer: "Anthropic" },
+            { name: "Claude 3 Opus", mmlu: null, intelligenceIndex: null, outputSpeed: 28, ttfT: 1.07, contextWindow: "200k", cost: 45, developer: "Anthropic" }, // Costo promedio
+            { name: "Gemini (Google)", details: "Modelos multimodales 'pensantes'. Gemini 2.5 Pro maneja grandes datos (1M tokens), crea código, razonamiento avanzado. Usos: Búsqueda, asistentes virtuales, desarrollo.", mmlu: 0.858, intelligenceIndex: 69, outputSpeed: 154.3, ttfT: 34.26, contextWindow: "1M", cost: 3.44, developer: "Google" },
+            { name: "DeepSeek-R1 (DeepSeek)", details: "Código abierto, compacto, rentable. Compite con gigantes tecnológicos.", developer: "DeepSeek" },
+            { name: "Grok 3 (xAI)", details: "Aprendizaje por refuerzo, evalúa y corrige errores. Usos: Chatbot Grok, asistentes personales.", developer: "xAI" },
+            { name: "PaLM 2 (Google AI)", details: "Razonamiento de sentido común, codificación, multilingüe. Usos: Resolución de problemas técnicos, IA conversacional.", developer: "Google AI" },
+            { name: "Cohere", details: "Diseñado para uso empresarial, personalizable. Usos: Chatbots a medida, análisis de datos.", developer: "Cohere" },
+            { name: "Ernie (Baidu)", details: "Optimizado para mandarín y dialectos chinos. Usos: Chatbots en chino, traducción.", developer: "Baidu" },
+            { name: "Falcon LLM (TII)", details: "Código abierto, gran cantidad de parámetros (40B, 180B). Usos: Generación de contenido.", developer: "TII" },
+            { name: "NLLB-200 (Meta AI)", details: "Traduce 200 idiomas, incluyendo africanos. Usos: Traducción y localización.", developer: "Meta AI" }
+        ];
+
+        // Data for CV Models (from report text and Table 2)
+        const cvModelsData = [
+            { name: "AlexNet", year: 2012, innovation: "ReLU, Dropout, Aumentación", uses: "Clasificación", accuracy: 57.0, map: null, speed: 3.1, params: "N/A" },
+            { name: "VGG-16", year: 2014, innovation: "Profundidad con filtros 3x3", uses: "Clasificación, Transfer Learning", accuracy: 70.5, map: null, speed: 9.4, params: "N/A" },
+            { name: "ResNet-50", year: 2015, innovation: "Aprendizaje Residual, Skip Connections", uses: "Clasificación", accuracy: 75.8, map: null, speed: 11.4, params: "N/A" },
+            { name: "DenseNet-201", year: 2016, innovation: "Conectividad Densa", uses: "Clasificación", accuracy: 77.0, map: null, speed: 32.6, params: "N/A" },
+            { name: "EfficientNet-B7", year: 2019, innovation: "Escalado Compuesto, NAS", uses: "Clasificación, Móviles", accuracy: 84.3, map: null, speed: null, params: "Menos" },
+            { name: "ConvNeXt", year: 2022, innovation: "Diseño Modernizado, Inspiración Transformer", uses: "Clasificación, Detección, Segmentación", accuracy: null, map: null, speed: null, params: "N/A" },
+            { name: "Faster R-CNN", year: 2015, innovation: "Region Proposal Network (RPN)", uses: "Detección de objetos", accuracy: null, map: null, speed: "En tiempo real", params: "N/A" },
+            { name: "Mask R-CNN", year: 2017, innovation: "Segmentación de Instancias, ROIAlign", uses: "Segmentación, Detección", accuracy: null, map: null, speed: null, params: "N/A" },
+            { name: "YOLOv8n", year: 2023, innovation: "Versatilidad ampliada", uses: "Detección, Segmentación, Pose", accuracy: null, map: null, speed: 4.1, params: "3.2M" },
+            { name: "YOLOv9 Gelan-e", year: 2024, innovation: "PGI, GELAN", uses: "Detección de objetos", accuracy: null, map: 0.935, speed: null, params: "N/A" },
+            { name: "YOLOv11n", year: 2024, innovation: "Módulos modernos (C2PSA)", uses: "Detección, Análisis de diseño", accuracy: null, map: null, speed: 2.4, params: "2.6M" },
+            { name: "YOLOv12l", year: 2025, innovation: "Area Attention (A2), R-ELAN", uses: "Detección en tiempo real", accuracy: null, map: 0.931, speed: null, params: "26.4M" },
+            { name: "U-Net", year: "N/A", innovation: "Codificador-Decodificador Simétrico", uses: "Segmentación biomédica", accuracy: null, map: null, speed: null, params: "N/A" },
+            { name: "SAM", year: "N/A", innovation: "Vision Transformer (ViT), Promptable", uses: "Segmentación, Edición", accuracy: null, map: null, speed: "~400-650", params: "N/A" }
+        ];
+        
+        // Data for Generative AI Models (from report text and Table 3)
+        const genAIModelsData = [
+            { name: "GANs", developer: "Varios", modality: "Imagen, Audio, Datos", capabilities: "Creación de datos sintéticos realistas.", features: "Generador y Discriminador en juego competitivo.", notes: "Puede producir imágenes borrosas (algunos casos), difícil de entrenar." },
+            { name: "VAEs", developer: "Varios", modality: "Imagen, Datos", capabilities: "Reducción de ruido, compresión, detección de anomalías, reconocimiento facial.", features: "Codifica datos probabilísticamente en espacio latente.", notes: "Puede producir imágenes más borrosas que GANs." },
+            { name: "Stable Diffusion", developer: "Stability AI", modality: "Imagen", capabilities: "Texto a imagen, Inpainting, Outpainting.", features: "Código abierto, personalizable, bajo consumo de recursos, ejecución local.", notes: "Dependencia de calidad de prompts, sesgos, imprecisiones anatómicas." },
+            { name: "DALL-E 3", developer: "OpenAI", modality: "Imagen", capabilities: "Texto a imagen.", features: "Comprensión contextual mejorada, integrado con ChatGPT.", notes: "Dificultad con prompts negativos/causalidad, puede negarse a generar contenido fáctico." },
+            { name: "Sora", developer: "OpenAI", modality: "Video", capabilities: "Texto a video (clips fotorrealistas).", features: "Genera videos temporalmente coherentes y detallados.", notes: "Modelo muy reciente." },
+            { name: "GPT-4o", developer: "OpenAI", modality: "Multimodal", capabilities: "Generación de texto, traducción, multimodal.", features: "Procesamiento rápido, traducción en +50 idiomas.", notes: "Multimodalidad integral." },
+            { name: "Gemini 2.5 Pro", developer: "Google", modality: "Multimodal", capabilities: "Generación de código, razonamiento avanzado.", features: "Ventana de contexto de 1M tokens, 'modelo pensante'.", notes: "Multimodalidad integral, razonamiento avanzado." },
+            { name: "NeRFs", developer: "Varios", modality: "3D", capabilities: "Generación de escenas 3D a partir de imágenes 2D.", features: "Modela la radiancia desde cada punto en el espacio.", notes: "N/A" },
+            { name: "RNNs", developer: "Varios", modality: "Secuencial (Texto, Audio)", capabilities: "Generación de datos secuenciales.", features: "Mantiene memoria de entradas anteriores.", notes: "Menos eficientes que Transformers para dependencias largas." },
+            { name: "Flow Models", developer: "Varios", modality: "Datos", capabilities: "Generación de datos, estimación de densidad.", features: "Transformaciones invertibles a espacio latente.", notes: "N/A" }
+        ];
+
+        // Data for Specialized Models (from report text and Table 4)
+        const specializedModelsData = [
+            { name: "AlphaFold", developer: "DeepMind", paradigm: "Aprendizaje Profundo", domain: "Predicción de estructuras de proteínas", impact: "Predice estructuras 3D de proteínas con precisión experimental, revolucionando la biología y la medicina.", notes: "Correlación débil con el impacto de mutaciones en estabilidad/función." },
+            { name: "AlphaGo", developer: "DeepMind", paradigm: "Aprendizaje por Refuerzo", domain: "Juegos (Go)", impact: "Primer AI en derrotar a un profesional humano de Go.", notes: "Aprendió de millones de partidas de aficionados." },
+            { name: "AlphaZero", developer: "DeepMind", paradigm: "Aprendizaje por Refuerzo", domain: "Juegos (Ajedrez, Shogi, Go), Optimización de Algoritmos", impact: "Aprendizaje desde cero, dominio de juegos, descubrimiento de algoritmos más rápidos.", notes: "No es eficiente en datos, experimentación costosa." },
+            { name: "MuZero", developer: "DeepMind", paradigm: "Aprendizaje por Refuerzo", domain: "Juegos (Ajedrez, Shogi, Go, Atari), Compresión de Video", impact: "Aprende el modelo del entorno sin reglas explícitas, compresión eficiente de video.", notes: "Problemas de eficiencia de datos y costo computacional." },
+            { name: "IA Predictiva", developer: "Varios", paradigm: "Aprendizaje Supervisado/Estadístico", domain: "Previsión de demanda, evaluación de riesgos", impact: "Pronostica resultados futuros con técnicas estadísticas.", notes: "Depende de la calidad y representatividad de los datos." },
+            { name: "IA Asistencial", developer: "Varios", paradigm: "Aprendizaje Supervisado, NLP", domain: "Asistentes virtuales, sistemas de recomendación, chatbots", impact: "Mejora la productividad humana, interacciones humanizadas.", notes: "Requiere datos etiquetados para entrenamiento supervisado." }
+        ];
+
+
+        // --- General Utility Functions ---
+        function populateExpandableCards(containerId, dataArray, iconClass = 'fas fa-microchip') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = ''; // Clear existing content
+
+            dataArray.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                let detailsHtml = '';
+                if (item.details) detailsHtml += `<p><strong>Detalles:</strong> ${item.details}</p>`;
+                if (item.year) detailsHtml += `<p><strong>Año:</strong> ${item.year}</p>`;
+                if (item.innovation) detailsHtml += `<p><strong>Innovación:</strong> ${item.innovation}</p>`;
+                if (item.uses) detailsHtml += `<p><strong>Usos:</strong> ${item.uses}</p>`;
+                if (item.modality) detailsHtml += `<p><strong>Modalidad:</strong> ${item.modality}</p>`;
+                if (item.capabilities) detailsHtml += `<p><strong>Capacidades:</strong> ${item.capabilities}</p>`;
+                if (item.features) detailsHtml += `<p><strong>Características:</strong> ${item.features}</p>`;
+                if (item.notes) detailsHtml += `<p><strong>Notas:</strong> ${item.notes}</p>`;
+                if (item.paradigm) detailsHtml += `<p><strong>Paradigma:</strong> ${item.paradigm}</p>`;
+                if (item.domain) detailsHtml += `<p><strong>Dominio:</strong> ${item.domain}</p>`;
+                if (item.impact) detailsHtml += `<p><strong>Impacto:</strong> ${item.impact}</p>`;
+
+
+                card.innerHTML = `
+                    <h4 class="card-title"><i class="${iconClass} mr-2"></i>${item.name} ${item.developer ? `(${item.developer})` : ''}</h4>
+                    ${ item.details && containerId === 'llmModelsContainer' ? `<p class="text-gray-600 text-sm mb-2">${item.details.substring(0,100)}...</p>` : ''}
+                    ${ item.innovation && containerId === 'cvModelsContainer' ? `<p class="text-gray-600 text-sm mb-2">${item.innovation.substring(0,100)}...</p>` : ''}
+                    ${ item.capabilities && containerId === 'genAIModelsContainer' ? `<p class="text-gray-600 text-sm mb-2">${item.capabilities.substring(0,100)}...</p>` : ''}
+                    ${ item.impact && containerId === 'specializedModelsContainer' ? `<p class="text-gray-600 text-sm mb-2">${item.impact.substring(0,100)}...</p>` : ''}
+                    <button class="expand-button" data-target="details-${containerId}-${index}">Ver más <i class="fas fa-chevron-down ml-1 text-xs"></i></button>
+                    <div id="details-${containerId}-${index}" class="details card-content">
+                        ${detailsHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        function createBarChart(canvasId, labels, data, label, backgroundColor = 'rgba(160, 82, 45, 0.6)', borderColor = 'rgba(160, 82, 45, 1)') {
+            const ctx = document.getElementById(canvasId)?.getContext('2d');
+            if (!ctx) return null;
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: backgroundColor,
+                        borderColor: borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: { display: true }
+                    },
+                    onResize: (chart, size) => {
+                        // Custom logic for resizing if needed
+                    }
+                }
+            });
+        }
+
+        function populateTable(tableBodyId, dataArray, columns) {
+            const tableBody = document.getElementById(tableBodyId);
+            if (!tableBody) return;
+            tableBody.innerHTML = ''; // Clear existing content
+
+            dataArray.forEach(item => {
+                const row = tableBody.insertRow();
+                columns.forEach(column => {
+                    const cell = row.insertCell();
+                    let value = item[column.key];
+                    if (typeof value === 'number' && !Number.isInteger(value)) {
+                        value = value.toFixed(column.toFixed !== undefined ? column.toFixed : 2);
+                    }
+                    cell.textContent = value !== null && value !== undefined ? value : 'N/A';
+                    if (column.numeric) cell.classList.add('text-right');
+                });
+            });
+        }
+
+        function filterTable(tableBodyId, filterInputId, dataArray, columns) {
+            const filterInput = document.getElementById(filterInputId);
+            const query = filterInput.value.toLowerCase();
+            const filteredData = dataArray.filter(item => {
+                return columns.some(column => {
+                    const value = String(item[column.key]).toLowerCase();
+                    return value.includes(query);
+                });
+            });
+            populateTable(tableBodyId, filteredData, columns);
+        }
+        
+        let sortDirections = {};
+
+        function sortTable(tableBodyId, dataArray, columns, sortKey) {
+            const direction = sortDirections[sortKey] === 'asc' ? 'desc' : 'asc';
+            sortDirections[sortKey] = direction;
+
+            // Reset other column sort icons
+            document.querySelectorAll(`#${tableBodyId.replace('Body','')} thead th.sortable`).forEach(th => {
+                const icon = th.querySelector('i');
+                if (th.dataset.sort !== sortKey) {
+                    icon.className = 'fas fa-sort ml-1';
+                } else {
+                    icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} ml-1`;
+                }
+            });
+
+
+            const sortedData = [...dataArray].sort((a, b) => {
+                let valA = a[sortKey];
+                let valB = b[sortKey];
+
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                
+                if (valA === null || valA === undefined || valA === "N/A") valA = direction === 'asc' ? Infinity : -Infinity;
+                if (valB === null || valB === undefined || valB === "N/A") valB = direction === 'asc' ? Infinity : -Infinity;
+
+
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            populateTable(tableBodyId, sortedData, columns);
+        }
+
+
+        // --- Event Listeners and Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+            
+            // Smooth scrolling and active nav link
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.hash !== "") {
+                        e.preventDefault();
+                        const hash = this.hash;
+                        const targetElement = document.querySelector(hash);
+                        if (targetElement) {
+                            window.scrollTo({
+                                top: targetElement.offsetTop - 80, // Adjust for sticky header
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                    // Active link styling
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            // Update active nav link on scroll
+            const sections = document.querySelectorAll('section');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 100) { // Adjust offset
+                        current = section.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+
+            // Populate LLM Cards
+            populateExpandableCards('llmModelsContainer', llmModelsData, 'fas fa-comments');
+            
+            // Populate CV Cards
+            populateExpandableCards('cvModelsContainer', cvModelsData, 'fas fa-eye');
+
+            // Populate GenAI Cards
+            populateExpandableCards('genAIModelsContainer', genAIModelsData, 'fas fa-magic');
+
+            // Populate Specialized Model Cards
+            populateExpandableCards('specializedModelsContainer', specializedModelsData, 'fas fa-star');
+
+
+            // Expand/Collapse functionality for cards
+            document.body.addEventListener('click', function(event) {
+                if (event.target.classList.contains('expand-button') || event.target.closest('.expand-button')) {
+                    const button = event.target.classList.contains('expand-button') ? event.target : event.target.closest('.expand-button');
+                    const targetId = button.dataset.target;
+                    const detailsDiv = document.getElementById(targetId);
+                    const icon = button.querySelector('i');
+                    if (detailsDiv) {
+                        detailsDiv.classList.toggle('hidden');
+                        icon.classList.toggle('fa-chevron-down');
+                        icon.classList.toggle('fa-chevron-up');
+                        button.innerHTML = detailsDiv.classList.contains('hidden') ? `Ver más <i class="fas fa-chevron-down ml-1 text-xs"></i>` : `Ver menos <i class="fas fa-chevron-up ml-1 text-xs"></i>`;
+                    }
+                }
+            });
+
+            // LLM Table and Charts
+            const llmTableColumns = [
+                { key: 'name', name: 'Modelo' },
+                { key: 'developer', name: 'Desarrollador' },
+                { key: 'mmlu', name: 'MMLU/Índice Intel.', numeric: true, toFixed: 3 },
+                { key: 'outputSpeed', name: 'Velocidad (tokens/s)', numeric: true, toFixed: 1 },
+                { key: 'ttfT', name: 'Latencia (TTFT)', numeric: true, toFixed: 2 },
+                { key: 'contextWindow', name: 'Ventana Contexto' },
+                { key: 'cost', name: 'Costo (USD/1M tk)', numeric: true, toFixed: 2 }
+            ];
+            populateTable('llmTableBody', llmModelsData, llmTableColumns);
+            document.getElementById('llmTableFilter')?.addEventListener('keyup', () => filterTable('llmTableBody', 'llmTableFilter', llmModelsData, llmTableColumns));
+            document.querySelectorAll('#llmTable th.sortable').forEach(th => {
+                th.addEventListener('click', () => sortTable('llmTableBody', llmModelsData, llmTableColumns, th.dataset.sort));
+            });
+
+            const llmsForMMLUChart = llmModelsData.filter(m => m.mmlu || m.intelligenceIndex).sort((a,b) => (b.mmlu || b.intelligenceIndex) - (a.mmlu || a.intelligenceIndex)).slice(0,10);
+            createBarChart('llmMMLUChart', 
+                llmsForMMLUChart.map(m => m.name), 
+                llmsForMMLUChart.map(m => m.mmlu || m.intelligenceIndex), 
+                'MMLU / Índice de Inteligencia'
+            );
+            
+            const llmsForSpeedChart = llmModelsData.filter(m => m.outputSpeed).sort((a,b) => b.outputSpeed - a.outputSpeed).slice(0,10);
+            createBarChart('llmSpeedChart', 
+                llmsForSpeedChart.map(m => m.name), 
+                llmsForSpeedChart.map(m => m.outputSpeed), 
+                'Velocidad de Salida (Tokens/s)',
+                'rgba(210, 105, 30, 0.6)', // chocolate color
+                'rgba(210, 105, 30, 1)'
+            );
+
+            // CV Table and Charts
+            const cvTableColumns = [
+                { key: 'name', name: 'Modelo' },
+                { key: 'year', name: 'Año', numeric: true },
+                { key: 'innovation', name: 'Innovación Clave' },
+                { key: 'accuracy', name: 'Precisión Top-1 (ImageNet)', numeric: true, toFixed: 1 },
+                { key: 'map', name: 'mAP@0.50', numeric: true, toFixed: 3 },
+                { key: 'speed', name: 'Vel. Inferencia (ms)', numeric: true, toFixed: 1 }
+            ];
+            populateTable('cvTableBody', cvModelsData, cvTableColumns);
+            document.getElementById('cvTableFilter')?.addEventListener('keyup', () => filterTable('cvTableBody', 'cvTableFilter', cvModelsData, cvTableColumns));
+             document.querySelectorAll('#cvTable th.sortable').forEach(th => {
+                th.addEventListener('click', () => sortTable('cvTableBody', cvModelsData, cvTableColumns, th.dataset.sort));
+            });
+
+            const cvForAccuracyChart = cvModelsData.filter(m => m.accuracy).sort((a,b) => b.accuracy - a.accuracy).slice(0,10);
+            createBarChart('cvAccuracyChart', 
+                cvForAccuracyChart.map(m => m.name), 
+                cvForAccuracyChart.map(m => m.accuracy), 
+                'Precisión Top-1 (ImageNet) (%)'
+            );
+            const cvForSpeedChart = cvModelsData.filter(m => m.speed && typeof m.speed === 'number').sort((a,b) => a.speed - b.speed).slice(0,10);
+             createBarChart('cvSpeedChart', 
+                cvForSpeedChart.map(m => m.name), 
+                cvForSpeedChart.map(m => m.speed), 
+                'Velocidad de Inferencia (ms) - Más bajo es mejor',
+                'rgba(210, 105, 30, 0.6)',
+                'rgba(210, 105, 30, 1)'
+            );
+
+
+            // Set current year in footer
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>
